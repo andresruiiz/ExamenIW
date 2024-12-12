@@ -3,10 +3,10 @@ import Evento from "@/models/Evento";
 import { connectDB } from "@/lib/mongodb";
 
 export async function GET(
-  request: Request,
-  context: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: { id: string } }
 ) {
-  const id = context.params.id;
+  const id = params.id;
 
   if (!id) {
     return NextResponse.json(
