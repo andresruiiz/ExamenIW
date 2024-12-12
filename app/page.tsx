@@ -12,7 +12,7 @@ export default function Home() {
       return (
         <div className="flex flex-col items-center gap-4">
           <h2>Bienvenido {session?.user?.name}</h2>
-          <img src={session?.user?.image} alt={session?.user?.name} className="w-20 h-20 rounded-full" />
+          <img src={session?.user?.image ?? undefined} alt={session?.user?.name ?? ""} className="w-20 h-20 rounded-full" />
           <button
             className="border border-solid border-black rounded"
             onClick={() => {
