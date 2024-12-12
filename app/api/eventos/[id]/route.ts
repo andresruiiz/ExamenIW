@@ -35,13 +35,3 @@ export async function GET(
     );
   }
 }
-
-    return NextResponse.json(evento);
-  } catch (error) {
-    console.error("Error al obtener el evento:", error);
-    return NextResponse.json(
-      { error: "Error al obtener el evento" },
-      { status: 500 }
-    );
-  }
-}
