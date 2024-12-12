@@ -1,12 +1,28 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import Evento from "@/models/Evento";
 import { connectDB } from "@/lib/mongodb";
 import cloudinary from "@/lib/cloudinary";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const lat = searchParams.get("lat");
+    const lon = searchParams.get("lon");
+
     await connectDB();
-    const eventos = await Evento.find({});
+
+    if (lat && lon) {
+      // Búsqueda por proximidad (0.2 unidades de distancia)
+      const eventos = await Evento.find({
+        lat: { $gte: Number(lat) - 0.2, $lte: Number(lat) + 0.2 },
+        lon: { $gte: Number(lon) - 0.2, $lte: Number(lon) + 0.2 },
+      }).sort({ timestamp: 1 });
+      
+      return NextResponse.json(eventos);
+    }
+
+    // Si no hay coordenadas, devuelve todos los eventos
+    const eventos = await Evento.find({}).sort({ timestamp: 1 });
     return NextResponse.json(eventos);
   } catch (error) {
     console.error("Error al obtener eventos:", error);

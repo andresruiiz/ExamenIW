@@ -1,8 +1,8 @@
 "use client";
+import { useState, useEffect } from "react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 
 interface Event {
   _id: string;
@@ -19,28 +19,8 @@ export default function Home() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const response = await fetch('/api/eventos');
-        if (!response.ok) {
-          throw new Error('Error al cargar los eventos');
-        }
-        const data = await response.json();
-        setEvents(data);
-      } catch (err) {
-        setError("Error al cargar los eventos");
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEvents();
-  }, []);
+  const [address, setAddress] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const showSession = () => {
     if (status === "authenticated") {
@@ -76,15 +56,52 @@ export default function Home() {
     }
   }
 
-  if (loading && status !== "loading") return <div>Cargando eventos...</div>;
-  if (error) return <div>{error}</div>;
+  const searchEvents = async () => {
+    try {
+      setLoading(true);
+      
+      const geocodeUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`;
+      const geocodeResponse = await fetch(geocodeUrl);
+      const geocodeData = await geocodeResponse.json();
+
+      if (geocodeData && geocodeData.length > 0) {
+        const { lat, lon } = geocodeData[0];
+        const response = await fetch(`/api/eventos?lat=${lat}&lon=${lon}`);
+        if (!response.ok) throw new Error('Error al cargar los eventos');
+        
+        const data = await response.json();
+        setEvents(data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <main className="flex min-h-screen flex-col items-center p-8">
       {showSession()}
-      
-      <h1 className="text-2xl font-bold mb-6">Eventos Disponibles</h1>
-      
+
+      <div className="w-full max-w-xl mb-8">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="Introduce una dirección"
+            className="flex-1 p-2 border rounded"
+          />
+          <button
+            onClick={searchEvents}
+            disabled={loading}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            {loading ? "Buscando..." : "Buscar"}
+          </button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-7xl">
         {events.map((event) => (
           <Link href={`/eventos/${event._id}`} key={event._id}>
@@ -100,7 +117,7 @@ export default function Home() {
                   {new Date(event.timestamp).toLocaleDateString()}
                 </p>
                 <p className="text-gray-600">{event.lugar}</p>
-                <p className="text-gray-600">{event.organizador}</p>
+                <p className="text-gray-600">Organizador: {event.organizador}</p>
               </div>
             </div>
           </Link>

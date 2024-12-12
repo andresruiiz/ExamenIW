@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import Evento from "@/models/Evento";
 import { connectDB } from "@/lib/mongodb";
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get("id");
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const id = params.id;
 
   if (!id) {
     return NextResponse.json(
