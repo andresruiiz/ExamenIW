@@ -4,7 +4,9 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
+
+const Map = dynamic(() => import("@/components/Map"), { ssr: false });
 
 interface Evento {
   _id: string;
@@ -35,14 +37,6 @@ export default function EventoDetalle({ params }: { params: { id: string } }) {
   const [error, setError] = useState('');
   const router = useRouter();
   const { data: session } = useSession();
-
-  const Map = useMemo(() => dynamic(
-    () => import('@/components/Map'),
-    {
-      loading: () => <p>A map is loading</p>,
-      ssr: false
-    }
-  ), []);
 
   useEffect(() => {
     getEvento(params.id)
@@ -107,7 +101,7 @@ export default function EventoDetalle({ params }: { params: { id: string } }) {
         </div>
 
         <div className="bg-white-700 mx-auto my-5 w-[98%] h-[480px]">
-          <Map posix={[evento.lat, evento.lon]} />
+          <Map location={{ lat: evento.lat, lon: evento.lon }} eventos={[evento]} />
         </div>
 
         {session?.user?.email === evento.organizador && (

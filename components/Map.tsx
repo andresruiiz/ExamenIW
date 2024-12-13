@@ -1,40 +1,76 @@
-"use client"
-
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import { LatLngExpression, LatLngTuple } from 'leaflet';
-
+"use client";
 import "leaflet/dist/leaflet.css";
-import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
-import "leaflet-defaulticon-compatibility";
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import { Marker, Popup, TileLayer, MapContainer, useMap } from "react-leaflet";
+import L from "leaflet";
+
+// Cargar el componente dinámicamente para evitar problemas con el lado del servidor
+const Map = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), {
+  ssr: false,
+});
+
+// Icono personalizado para los marcadores del mapa
+const customIcon = new L.Icon({
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+});
+
+interface Event {
+  _id: string;
+  nombre: string;
+  lugar: string;
+  lat: number;
+  lon: number;
+}
 
 interface MapProps {
-    posix: LatLngExpression | LatLngTuple,
-    zoom?: number,
+  location: { lat: number; lon: number };
+  eventos: Event[];
 }
 
-const defaults = {
-    zoom: 19,
-}
+const RecenterAutomatically = ({location}: {location: {lat: number, lon: number}}) => {
+  const map = useMap();
+   useEffect(() => {
+     map.setView([location.lat, location.lon]);
+   }, [location.lat, location.lon]);
+   return null;
+ }
 
-const Map = (Map: MapProps) => {
-    const { zoom = defaults.zoom, posix } = Map
+const EventMap: React.FC<MapProps> = ({ location, eventos }) => {
+  const [zoom, setZoom] = useState(13);
 
-    return (
-        <MapContainer
-            center={posix}
-            zoom={zoom}
-            scrollWheelZoom={false}
-            style={{ height: "100%", width: "100%" }}
+  useEffect(() => {
+    if (location.lat && location.lon) {
+      setZoom(13);
+    }
+  }, [location]);
+
+  return (
+    <MapContainer
+      center={[location.lat, location.lon]}
+      zoom={zoom}
+      style={{ height: "400px", width: "100%" }}
+      scrollWheelZoom={true}
+    >
+      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      {eventos.map((evento) => (
+        <Marker
+          key={evento._id}
+          position={[evento.lat, evento.lon]}
+          icon={customIcon}
         >
-            <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <Marker position={posix} draggable={false}>
-                <Popup>Hey ! I study here</Popup>
-            </Marker>
-        </MapContainer>
-    )
-}
+          <Popup>
+            <strong>{evento.nombre}</strong>
+            <br />
+            {evento.lugar}
+          </Popup>
+        </Marker>
+      ))}
+       <RecenterAutomatically location={location} />
+    </MapContainer>
+  );
+};
 
-export default Map
+export default EventMap;
