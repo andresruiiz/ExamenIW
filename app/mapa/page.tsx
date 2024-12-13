@@ -54,9 +54,30 @@ export default function MapaUsuario() {
 
   return (
     <main className="flex min-h-screen flex-col items-center p-8">
+      <h1 className="text-2xl font-bold mb-4">Visitas de {email}</h1>
       <div className="w-full max-w-7xl mb-8">
         <Map location={location} visitas={visits} />
       </div>
+      <table className="min-w-full bg-white">
+        <thead>
+          <tr>
+            <th className="py-2 px-4 border-b">Nombre</th>
+            <th className="py-2 px-4 border-b">Fecha</th>
+            <th className="py-2 px-4 border-b">Lugar</th>
+            <th className="py-2 px-4 border-b">Creador</th>
+          </tr>
+        </thead>
+        <tbody>
+          {visits.map((visit) => (
+            <tr key={visit._id}>
+              <td className="py-2 px-4 border-b">{visit.nombre}</td>
+              <td className="py-2 px-4 border-b">{new Date(visit.timestamp).toLocaleString()}</td>
+              <td className="py-2 px-4 border-b">{visit.lugar}</td>
+              <td className="py-2 px-4 border-b">{visit.creador}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </main>
   );
 }
