@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { use } from 'react';
 import dynamic from "next/dynamic";
 
 const Map = dynamic(() => import("@/components/Map"), { ssr: false });
@@ -31,18 +32,19 @@ async function getEvento(id: string): Promise<Evento> {
   return res.json();
 }
 
-export default function EventoDetalle({ params }: { params: { id: string } }) {
+export default function EventoDetalle({ params }: { params: Promise<{ id: string }> }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [evento, setEvento] = useState<Evento | null>(null);
   const [error, setError] = useState('');
   const router = useRouter();
   const { data: session } = useSession();
+  const { id } = use(params);
 
   useEffect(() => {
-    getEvento(params.id)
+    getEvento(id)
       .then(setEvento)
       .catch(err => setError(err.message));
-  }, [params.id]);
+  }, [id]);
 
   const handleDelete = async () => {
     if (!confirm('¿Estás seguro de que quieres borrar este evento?')) {
@@ -51,7 +53,7 @@ export default function EventoDetalle({ params }: { params: { id: string } }) {
 
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/eventos/${params.id}`, {
+      const res = await fetch(`/api/eventos/${id}`, {
         method: 'DELETE'
       });
 
@@ -100,7 +102,7 @@ export default function EventoDetalle({ params }: { params: { id: string } }) {
           <p><strong>Organizador:</strong> {evento.organizador}</p>
         </div>
 
-        <div className="bg-white-700 mx-auto my-5 w-[98%] h-[480px]">
+        <div className="mb-8">
           <Map location={{ lat: evento.lat, lon: evento.lon }} eventos={[evento]} />
         </div>
 
