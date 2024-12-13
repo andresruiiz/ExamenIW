@@ -6,12 +6,12 @@ const LogSchema = new mongoose.Schema({
     default: Date.now,
     required: true
   },
-  userEmail: {
+  visitorEmail: {
     type: String,
     required: true
   },
-  expiryTimestamp: {
-    type: Date,
+  visitedEmail: {
+    type: String,
     required: true
   },
   token: {

@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const EventoSchema = new mongoose.Schema(
+const VisitaSchema = new mongoose.Schema(
   {
     nombre: {
       type: String,
@@ -22,7 +22,7 @@ const EventoSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    organizador: {
+    creador: {
       type: String,
       required: true,
     },
@@ -37,7 +37,7 @@ const EventoSchema = new mongoose.Schema(
   }
 );
 
-const Evento =
-  mongoose.models?.Evento || mongoose.model("Evento", EventoSchema);
+const Visita =
+  mongoose.models?.Visita || mongoose.model("Visita", VisitaSchema);
 
-export default Evento;
+export default Visita;

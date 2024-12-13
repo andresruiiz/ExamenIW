@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import Evento from "@/models/Evento";
+import Visita from "@/models/Visita";
 import { connectDB } from "@/lib/mongodb";
 import cloudinary from "@/lib/cloudinary";
 import { getServerSession } from "next-auth";
@@ -8,28 +8,26 @@ import { authOptions } from "@/lib/auth";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const lat = searchParams.get("lat");
-    const lon = searchParams.get("lon");
+    const email = searchParams.get("email");
 
     await connectDB();
 
-    if (lat && lon) {
-      // Búsqueda por proximidad (0.2 unidades de distancia)
-      const eventos = await Evento.find({
-        lat: { $gte: Number(lat) - 0.2, $lte: Number(lat) + 0.2 },
-        lon: { $gte: Number(lon) - 0.2, $lte: Number(lon) + 0.2 },
+    if (email) {
+      // Búsqueda por email del creador
+      const visitas = await Visita.find({
+        creador: email
       }).sort({ timestamp: 1 });
       
-      return NextResponse.json(eventos);
+      return NextResponse.json(visitas);
     }
 
-    // Si no hay coordenadas, devuelve todos los eventos
-    const eventos = await Evento.find({}).sort({ timestamp: 1 });
-    return NextResponse.json(eventos);
+    // Si no hay email, devuelve todas las visitas
+    const visitas = await Visita.find({}).sort({ timestamp: 1 });
+    return NextResponse.json(visitas);
   } catch (error) {
-    console.error("Error al obtener eventos:", error);
+    console.error("Error al obtener visitas:", error);
     return NextResponse.json(
-      { error: "Error al obtener eventos" },
+      { error: "Error al obtener visitas" },
       { status: 500 }
     );
   }
@@ -40,7 +38,7 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json(
-        { error: "Debes iniciar sesión para crear eventos" },
+        { error: "Debes iniciar sesión para crear visitas" },
         { status: 401 }
       );
     }
@@ -96,23 +94,23 @@ export async function POST(req: Request) {
       );
     }
 
-    // Crear el evento usando el email del usuario autenticado
-    const evento = new Evento({
+    // Crear la visita usando el email del usuario autenticado
+    const visita = new Visita({
       nombre,
       timestamp,
       lugar,
       lat,
       lon,
-      organizador: session.user.email,
+      creador: session.user.email,
       imagen: imagenUrl,
     });
 
-    await evento.save();
-    return NextResponse.json(evento, { status: 201 });
+    await visita.save();
+    return NextResponse.json(visita, { status: 201 });
   } catch (error) {
-    console.error("Error al crear el evento:", error);
+    console.error("Error al crear la visita:", error);
     return NextResponse.json(
-      { error: "Error al crear el evento" },
+      { error: "Error al crear la visita" },
       { status: 500 }
     );
   }
