@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { use } from 'react';
+import dynamic from 'next/dynamic';
 
 interface Evento {
   _id: string;
@@ -29,19 +29,26 @@ async function getEvento(id: string): Promise<Evento> {
   return res.json();
 }
 
-export default function EventoDetalle({ params }: { params: Promise<{ id: string }> }) {
+export default function EventoDetalle({ params }: { params: { id: string } }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [evento, setEvento] = useState<Evento | null>(null);
   const [error, setError] = useState('');
   const router = useRouter();
   const { data: session } = useSession();
-  const { id } = use(params);
+
+  const Map = useMemo(() => dynamic(
+    () => import('@/components/Map'),
+    {
+      loading: () => <p>A map is loading</p>,
+      ssr: false
+    }
+  ), []);
 
   useEffect(() => {
-    getEvento(id)
+    getEvento(params.id)
       .then(setEvento)
       .catch(err => setError(err.message));
-  }, [id]);
+  }, [params.id]);
 
   const handleDelete = async () => {
     if (!confirm('¿Estás seguro de que quieres borrar este evento?')) {
@@ -50,7 +57,7 @@ export default function EventoDetalle({ params }: { params: Promise<{ id: string
 
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/eventos/${id}`, {
+      const res = await fetch(`/api/eventos/${params.id}`, {
         method: 'DELETE'
       });
 
@@ -97,6 +104,10 @@ export default function EventoDetalle({ params }: { params: Promise<{ id: string
           <p><strong>Fecha:</strong> {new Date(evento.timestamp).toLocaleString()}</p>
           <p><strong>Lugar:</strong> {evento.lugar}</p>
           <p><strong>Organizador:</strong> {evento.organizador}</p>
+        </div>
+
+        <div className="bg-white-700 mx-auto my-5 w-[98%] h-[480px]">
+          <Map posix={[evento.lat, evento.lon]} />
         </div>
 
         {session?.user?.email === evento.organizador && (
