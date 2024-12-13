@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import Evento from "@/models/Evento";
 import { connectDB } from "@/lib/mongodb";
 import cloudinary from "@/lib/cloudinary";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,12 +37,19 @@ export async function GET(request: NextRequest) {
 
 export async function POST(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Debes iniciar sesión para crear eventos" },
+        { status: 401 }
+      );
+    }
+
     await connectDB();
     const formData = await req.formData();
     const nombre = formData.get("nombre") as string;
     const timestamp = formData.get("timestamp") as string;
     const lugar = formData.get("lugar") as string;
-    const organizador = formData.get("organizador") as string;
     const imagen = formData.get("imagen") as File;
 
     if (!imagen) {
@@ -87,14 +96,14 @@ export async function POST(req: Request) {
       );
     }
 
-    // Crear el evento con la latitud y longitud obtenidas
+    // Crear el evento usando el email del usuario autenticado
     const evento = new Evento({
       nombre,
       timestamp,
       lugar,
       lat,
       lon,
-      organizador,
+      organizador: session.user.email,
       imagen: imagenUrl,
     });
 
